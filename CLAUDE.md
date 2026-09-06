@@ -2,6 +2,15 @@
 
 Kiro-style Spec-Driven Development on an agentic SDLC
 
+## ⚠️ 制約の正本は `/AGENTS.md`
+
+技術スタック、禁止 API、設計制約、テスト戦略、スコープ外の判断は**すべて `/AGENTS.md` に書かれている**。
+このファイルと `.kiro/steering/*.md` はそこを参照するだけで、制約を重複して書かない。
+Codex は `.kiro/steering/` を自動では読まないが `AGENTS.md` は読む。正本を 1 つに保つことで、
+Codex と Claude が違うルールで動くことを構造的に防いでいる。
+
+**制約を変更するときは `/AGENTS.md` だけを編集すること。**
+
 ## Project Context
 
 ### Paths
@@ -32,9 +41,12 @@ Kiro-style Spec-Driven Development on an agentic SDLC
     - `/kiro-validate-design {feature}` (optional: design review)
     - `/kiro-spec-tasks {feature} [-y]`
   - Multi-spec: `/kiro-spec-batch` — creates all specs from roadmap.md in parallel by dependency wave
-- Phase 2 (Implementation): `/kiro-impl {feature} [tasks]`
-  - Without task numbers: autonomous mode (subagent per task + independent review + final validation)
-  - With task numbers: manual mode (selected tasks in main context, still reviewer-gated before completion)
+- Phase 2 (Implementation): **`/kiro-impl` は使わない。** 実装は TAKT 経由で Codex が行い、レビューを Claude が担う
+  - 1 piece = tasks.md の親タスク単位（サブタスクの束）
+  - Review movement では Claude が `kiro-review` スキルを適用する
+  - 完了主張の前に `kiro-verify-completion` を通す
+  - **review → fix が 3 往復したら人間にエスカレーションする**（TAKT のループ検出は保険として重ねる）
+  - `tasks.md` の各タスクは**単体で読めば実装できる状態**にする。Codex は会話文脈も steering も自動では読まないため、受け入れ基準・参照すべきファイルパス・対応する要件 ID をタスク本文に含めること
   - `/kiro-validate-impl {feature}` (standalone re-validation)
 - Progress check: `/kiro-spec-status {feature}` (use anytime)
 
@@ -57,5 +69,10 @@ Skills are located in `.claude/skills/kiro-*/SKILL.md`
 
 ## Steering Configuration
 - Load entire `.kiro/steering/` as project memory
-- Default files: `product.md`, `tech.md`, `structure.md`
+- **`/AGENTS.md` が制約の正本。** steering ファイルは制約を重複して書かず、`AGENTS.md` を参照する
+- 現在の steering:
+  - `roadmap.md` — スペックの分割、依存順序、その理由
+  - `exercise-seed.md` — 8 部位 / 54 種目のシードデータと、スキーマ設計への含意
+  - `spike-plan.md` — Phase 0 技術スパイクの計画（測る 4 つの数字と打ち切り条件）
+  - `spike-findings.md` — スパイクの測定結果（**未作成。Phase 0 完了時に作る**）
 - Custom files are supported (managed via `/kiro-steering-custom`)
