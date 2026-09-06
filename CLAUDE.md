@@ -42,10 +42,10 @@ Codex と Claude が違うルールで動くことを構造的に防いでいる
     - `/kiro-spec-tasks {feature} [-y]`
   - Multi-spec: `/kiro-spec-batch` — creates all specs from roadmap.md in parallel by dependency wave
 - Phase 2 (Implementation): **`/kiro-impl` は使わない。** 実装は TAKT 経由で Codex が行い、レビューを Claude が担う
-  - 1 piece = tasks.md の親タスク単位（サブタスクの束）
-  - Review movement では Claude が `kiro-review` スキルを適用する
+  - 投入の単位は tasks.md の親タスク（サブタスクの束）。`takt add #<Issue番号>` で渡す
+  - レビューのステップでは Claude が `kiro-review` スキルを適用する
   - 完了主張の前に `kiro-verify-completion` を通す
-  - **review → fix が 3 往復したら人間にエスカレーションする**（TAKT のループ検出は保険として重ねる）
+  - 停滞は `loop_monitors`（`cycle` / `threshold` / `judge`）で止める。**threshold 到達時に呼ばれるのは AI の loop judge であって人間ではない**。宣言していない経路は監視対象外。詳細は `.kiro/steering/roadmap.md` の「ループの止め方」
   - `tasks.md` の各タスクは**単体で読めば実装できる状態**にする。Codex は会話文脈も steering も自動では読まないため、受け入れ基準・参照すべきファイルパス・対応する要件 ID をタスク本文に含めること
   - `/kiro-validate-impl {feature}` (standalone re-validation)
 - Progress check: `/kiro-spec-status {feature}` (use anytime)
