@@ -149,5 +149,5 @@ TAKT の用語は **workflow（ステップの列）と step** である。`piec
 
 ワークフロー全体の暴走は `max_steps` で止める（`steps` / `initial_step` と並ぶワークフローの設定キー）。
 
-**参考値**: `run-training-app` での実測では、policy の導入により 448 分 → 151 分に短縮された。`max_steps` は 75 が推奨。
-（出典は開発者の実測であり、TAKT の公開ドキュメントには記載がない。設定時に再確認すること）
+**参考値**: `run-training-app` での実測では、policy の導入により **448 分 → 151 分**に短縮された。`max_steps` は **75** が推奨。
+出典は開発者の実測であり、TAKT の公開ドキュメント（README / `docs/configuration.md` / DeepWiki）には記載がない。この値を引用するときは出典を併記すること。
