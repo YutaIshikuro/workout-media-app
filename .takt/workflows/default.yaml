@@ -1,0 +1,100 @@
+name: default
+description: |
+  ビルトイン default に、本プロジェクト固有のポリシーとナレッジを注入したもの。
+  ステップ構成・ループ監視（loop_monitors）はビルトインの development-core / peer-review
+  をそのまま呼び出すため、TAKT 本体の更新がそのまま効く。
+  このファイルで行うのは facet の差し込みと max_steps の引き上げだけに留める。
+  （`default.yaml` 以外を eject すると trust boundary エラーで設定が壊れる）
+# 既定の 51 では足りなかった実測がある（出典: run-training-app、開発者の実測）。
+# final-gate → replan → implement → 全レビューやり直しの外側ループは
+# loop_monitors の監視対象外で、上限に達するまで止まらない。
+max_steps: 75
+initial_step: develop
+
+steps:
+  - name: develop
+    kind: workflow_call
+    call: development-core
+    args:
+      implementation_pool: coding-facets
+      implementation_workflow: development-implement-dynamic
+      remediation_workflow: development-remediation-dynamic
+      plan_instruction: scenario-based-plan
+      plan_report_format: scenario-based-plan
+      replan_instruction: scenario-based-replan-implementation
+      testing_instruction: scenario-based-write-tests-first
+      testing_report_format: scenario-based-test-report
+      fix_plan_instruction: scenario-based-fix-plan-from-review-resolution
+      fix_plan_report_format: scenario-based-fix-plan
+      final_gate_instruction: scenario-based-supervise-review-resolution
+      implementation_companions:
+        fixed:
+          - ai-antipattern-review-companion
+          - testing-review-companion
+        pool: []
+        moderator: review-companion-moderator
+      reviewer_suite: development-review
+      # --- 計画 ---
+      # spec-driven の「実装前に確定させること」がここで最も効く。
+      # run-training-app で同節を投入したところ、タスク5の
+      # 448分 / 51 iterations / final-gate 差し戻し4回が、
+      # タスク6で 151分 / 20 iterations / 差し戻し0回になった。
+      # （出典: 開発者の実測。モデルの変更ではなく policy の投入による）
+      plan_policy:
+        - design-planning
+        - spec-driven
+      plan_knowledge:
+        - architecture
+        - task-decomposition
+        - expo-windows
+      # --- テスト作成 ---
+      testing_policy:
+        - coding
+        - testing
+        - verification-honesty
+      testing_knowledge:
+        - architecture
+        - unit-testing
+        - e2e-testing
+        - expo-windows
+      # --- 実装 ---
+      development_policy:
+        - coding
+        - testing
+        - ai-antipattern
+        - react
+        - spec-driven
+        - verification-honesty
+      development_knowledge:
+        - architecture
+        - implementation-semantics
+        - react
+        - expo-windows
+      # --- レビュー ---
+      # review_policy_additions は全レビュアーに追加で配られる
+      review_policy_additions:
+        - spec-driven
+        - verification-honesty
+      # review_policy は「レビュアーのポリシー」ではない。development-core は
+      # これを fix-plan / verification / final-gate に配る（peer-review 呼び出しの
+      # plan_policy / verification_policy / final_gate_policy）。
+      review_policy:
+        - coding
+        - testing
+        - review
+        - architecture
+      # review_knowledge は review_knowledge_additions として全レビュアーに配られ、
+      # verification_knowledge にもなる。expo-windows をここに置くのは、
+      # 「手元で検証できたか」を全レビュアーが判定できるようにするため。
+      # react はここに入れない。ビルトインの frontend-review が
+      # policy/knowledge の両方で react を既定で読んでいる（重複になる）。
+      review_knowledge:
+        - architecture
+        - unit-testing
+        - e2e-testing
+        - expo-windows
+    rules:
+      - condition: COMPLETE
+        next: COMPLETE
+      - condition: ABORT
+        next: ABORT
