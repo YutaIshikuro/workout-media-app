@@ -1,0 +1,104 @@
+# TAKT project config — workout-media-app
+#
+# 役割分担: 実装 = Codex / レビュー・計画・裁定 = Claude
+#
+# 注意: provider_routing / provider_options / provider_profiles は
+# 「プロジェクト層がグローバル層を全置換」する（deep merge されない）。
+# そのため ~/.takt/config.yaml から必要な項目をここに写して自己完結させている。
+#
+# 制約の正本は /AGENTS.md。このファイルはモデル割り当てだけを扱う。
+
+language: ja
+
+# 既定プロバイダ（下のルーティングに一致しないステップが使う）
+provider: codex
+model: gpt-5.6-terra
+
+provider_routing:
+  # 優先順位は steps > tags > personas。
+  # tags はステップ定義側の tags: に対応し、工程単位で一括指定できる。
+  tags:
+    # ---- 実装side（edit: true のステップ）→ Codex ----
+    # implement / write_tests / peer-review-fix / fix-with-provider-tools
+    coding:
+      provider: codex
+      model: gpt-5.6-terra
+
+    # ---- レビューside（edit: false のステップ）→ Claude ----
+    # 既定は sonnet + effort medium。5人が並列で走るため全員 opus にすると
+    # セッション制限に当たる（run-training-app で 5並列が同時に rate_limited）。
+    review:
+      provider: claude
+      model: sonnet
+      provider_options:
+        claude:
+          effort: medium
+
+    # レビュー指摘の裁定（review-adjudicator）。
+    # 「純粋関数として書けているか」「スペック境界を越えていないか」の判断は
+    # 型検査では出ないので opus に残す。
+    adjudication:
+      provider: claude
+      model: opus
+
+    # 修正内容の検証（peer-review-fix-verifier）。
+    # 本プロジェクトは tsc / vitest が Windows 上でそのまま動くため、
+    # 修正が効いたかどうかは機械的に確かめられる。sonnet で足りる。
+    # （run-training-app は Swift がローカルで動かず opus 必須だった）
+    verification:
+      provider: claude
+      model: sonnet
+
+    # 最終ゲート / 監督（supervisor）
+    final-gate:
+      provider: claude
+      model: opus
+    supervise:
+      provider: claude
+      model: opus
+
+    # ---- 計画side ----
+    # 計画で決めた構造がその後の全ステップを規定する。特にロジック層と
+    # アダプタ層の切り分け（/AGENTS.md §0）は、後から剥がすと import の
+    # 連鎖で広範囲の書き換えになるため、ここだけは opus に残す。
+    # （計画の質そのものは spec-driven policy が効く。実測は
+    #   .takt/workflows/default.yaml の plan_policy のコメントに記載）
+    plan:
+      provider: claude
+      model: opus
+
+  # tags より優先。レビュアー個別の引き上げに使う。
+  steps:
+    # ロジック層を React から剥がせているか、スペックの所有境界を越えていないかの
+    # 判定には spec 全体の把握が要る。ここが本プロジェクトの最重要レビュー。
+    architecture-review:
+      provider: claude
+      model: opus
+    # 「Windows で検証できること」と「CI でしか検証できないこと」の切り分けを
+    # 見抜くのはテストレビュー。Simulator が HEVC を再生できない盲点
+    # （/AGENTS.md §5）を見落とすと偽の緑が積み上がる。
+    testing-review:
+      provider: claude
+      model: opus
+
+provider_options:
+  codex:
+    # npm install / npx expo が要るのでネットワークを許可する。
+    network_access: true
+    reasoning_effort: medium
+  claude:
+    # Claude はレビュー・裁定・計画のみを担当し、コードを書かない。
+    # Bash はテスト実行と git diff の確認のために付与する。
+    # TypeScript は Windows 上で tsc / vitest がそのまま動くため、
+    # 実装側の「テストが通った」という自己申告をレビュアーが自分で確かめられる。
+    # 編集系ツール（Edit / Write）は与えないため、コードは書けない。
+    allowed_tools: [Read, Glob, Grep, Bash]
+
+provider_profiles:
+  codex:
+    default_permission_mode: edit
+  claude:
+    default_permission_mode: edit
+
+workflow_command_gates:
+  custom_scripts: true
