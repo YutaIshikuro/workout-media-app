@@ -29,7 +29,7 @@ npx create-expo-app@latest ../formcatalog-spike --template blank-typescript
 
 スパイクの仕様は「数字を測れ」だけであり、Codex 向けに自己完結した仕様を書くコストがスパイク本体を上回る。
 
-なお、この期間は時間が余るので**並行して TAKT のワークフロー定義（`steps` / `initial_step` / `max_steps` / `loop_monitors`）と kiro の tasks.md テンプレート調整を進める**。Apple の承認が下りた瞬間に `app-foundation` を流せる状態にしておくのが待ち時間の最良の使い道になる。
+なお、この期間は時間が余るので**並行して TAKT のワークフロー定義（`steps` / `initial_step` / `max_steps` / `loop_monitors`）と `.takt/facets/` の整備を進める**。facet が用意できていないとタスク文に定型を毎回書く羽目になるので、実装を始める前に済ませておきたい。Apple の承認が下りた瞬間に `app-foundation` を流せる状態にしておくのが待ち時間の最良の使い道になる。
 
 ## 打ち切り条件
 

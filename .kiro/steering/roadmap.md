@@ -120,18 +120,38 @@ Apple Developer Program の承認に 2〜7 週間かかる。その待ち時間�
 
 TAKT の用語は **workflow（ステップの列）と step** である。`piece` / `movement` という単位は存在しない。
 
-タスクの投入経路は 2 つある:
+投入経路は 3 つある。CLI の定義は `takt add [options] [task]` で、`task` は **Task description or issue reference** — **タスクの説明文そのものを渡せる。Issue 番号は選択肢の 1 つにすぎない**:
 
-- `takt add #<Issue番号>` — **引数は GitHub Issue 番号**。tasks.md の親タスク 1 件を Issue 1 件として起票し、その番号を渡す
-- 会話モードの `takt` で作業を説明し、「Queue as task」でキューに積む
+- **`takt add "タスクの説明文"`** — 本文が `.takt/tasks/<日時>-<スラッグ>/order.md` に書き出され、キューに積まれる。**Issue の起票は不要**
+- `takt add "#<Issue番号>"` — GitHub Issue の内容をタスクにする
+- 会話モードで作業を説明し、「タスクにつむ」を選ぶ
 
-いずれの経路でも、**Codex が読むのは投入したタスク文（または Issue 本文）だけ**である。会話文脈も `.kiro/steering/` も自動では読まない。したがってタスク文は次の型で書き、単体で読めば実装できる状態にする:
+**本プロジェクトはプレーンテキスト投入を既定とする。** 親タスクごとに Issue を立てるのは不要な手間であり、`run-training-app` でも全タスクをプレーンテキストで投入している。
 
-1. **やること** — 1 文
-2. **受け入れ基準** — 検証可能な箇条書き。「テストが通る」ではなく、どのテストがどう通るか
-3. **参照すべきファイルパス** — `AGENTS.md`、該当スペックの `design.md` の節、触る実装ファイル
-4. **対応する要件 ID** — requirements.md への逆参照
-5. **触ってはいけない範囲** — 隣接タスクの担当ファイル
+### 定型は facet に置き、タスク文には固有のことだけ書く
+
+**毎回書く必要があるのは、そのタスク固有のことだけでよい。** 定型は `.takt/facets/` に置く。facet は Persona / Policy / Instruction / Knowledge / Output Contract の 5 関心に分けて記述し、**ステップごとに注入・省略・上書きができる**（同じワークフロー定義とファイルからは同じプロンプトが決定的に組み立てられる）。
+
+facet に置くもの:
+
+| 内容 | 置き場所 |
+|---|---|
+| spec / steering / docs の参照順序 | `spec-driven.md` |
+| タスク境界の遵守（先のタスクに手を出さない） | `spec-driven.md` |
+| ファイル配置と命名規約に従う | `spec-driven.md` |
+| 検証できる範囲と実行コマンド（Windows / EAS / Simulator の別） | `knowledge/` 配下 |
+| 「通った」と嘘を書かない、未検証は未検証と書く | `verification-honesty.md` |
+| 日本語で書く | `config.yaml` の `language: ja` |
+
+**重要な区別**: TAKT が `.kiro/steering/` を自動で読むのではない。**facet が読ませている。** `spec-driven.md` の参照順序がそう指示しているから、plan ステップが steering を読んだ記録が残る。この区別を取り違えると、定型を毎回タスク文に手で書く運用に戻る。`run-training-app` では facet 導入後にタスク文が **30 行から 2 行**になった。
+
+**facet は `AGENTS.md` を再掲しない。** 制約の正本は `AGENTS.md` のままである（Codex は `AGENTS.md` を規約として読む）。facet に書くのは「何を、どの順で読むか」という参照順序であって、制約の中身ではない。ここを再掲すると正本が 2 つになり、片方だけ更新されて食い違う。
+
+タスク文に書くのは 3 つだけ:
+
+1. **どのスペックのどのタスクか** — `.kiro/specs/<spec>/tasks.md` の親タスク番号と名前
+2. **そのタスク固有の指示**（あれば）
+3. **着手してはいけない範囲** — 隣接タスクの担当ファイル
 
 ### ループの止め方
 

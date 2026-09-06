@@ -6,7 +6,7 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 
 技術スタック、禁止 API、設計制約、テスト戦略、スコープ外の判断は**すべて `/AGENTS.md` に書かれている**。
 このファイルと `.kiro/steering/*.md` はそこを参照するだけで、制約を重複して書かない。
-Codex は `.kiro/steering/` を自動では読まないが `AGENTS.md` は読む。正本を 1 つに保つことで、
+Codex は `AGENTS.md` を規約として読む。`.kiro/steering/` は TAKT が自動で読むのではなく、`.takt/facets/` の参照順序が読ませる。正本を 1 つに保つことで、
 Codex と Claude が違うルールで動くことを構造的に防いでいる。
 
 **制約を変更するときは `/AGENTS.md` だけを編集すること。**
@@ -46,7 +46,8 @@ Codex と Claude が違うルールで動くことを構造的に防いでいる
   - レビューのステップでは Claude が `kiro-review` スキルを適用する
   - 完了主張の前に `kiro-verify-completion` を通す
   - 停滞は `loop_monitors`（`cycle` / `threshold` / `judge`）で止める。**threshold 到達時に呼ばれるのは AI の loop judge であって人間ではない**。宣言していない経路は監視対象外。詳細は `.kiro/steering/roadmap.md` の「ループの止め方」
-  - `tasks.md` の各タスクは**単体で読めば実装できる状態**にする。Codex は会話文脈も steering も自動では読まないため、受け入れ基準・参照すべきファイルパス・対応する要件 ID をタスク本文に含めること
+  - 投入は `takt add "タスクの説明文"`（プレーンテキスト）を既定とする。Issue の起票は不要
+  - **定型は `.takt/facets/` に置き、タスク文にはそのタスク固有のことだけ書く**（どのスペックのどのタスクか / 固有の指示 / 着手してはいけない範囲）。facet は `AGENTS.md` を再掲せず、参照順序だけを書く
   - `/kiro-validate-impl {feature}` (standalone re-validation)
 - Progress check: `/kiro-spec-status {feature}` (use anytime)
 
