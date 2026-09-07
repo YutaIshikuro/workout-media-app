@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "FormCatalog",
+    "slug": "form-catalog",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.yutaishikuro.formcatalog"
+    },
+    "plugins": ["expo-router"]
+  }
+}
