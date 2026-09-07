@@ -1,7 +1,7 @@
 # Implementation Plan
 
-- [ ] 1. プロジェクト基盤の初期化
-- [ ] 1.1 Expo SDK 57 プロジェクトを初期化し、バージョンを固定する
+- [x] 1. プロジェクト基盤の初期化
+- [x] 1.1 Expo SDK 57 プロジェクトを初期化し、バージョンを固定する
   - `create-expo-app` で TypeScript テンプレートからプロジェクトを作り、既定の雛形画面を削除する
   - `expo` を `57.0.20` の完全一致で固定し、キャレットを使わない。他の Expo 系依存も SDK 57 に整合させる
   - expo-router を導入し、エントリポイントを expo-router に向ける
@@ -11,7 +11,7 @@
   - 観測可能な完了: Windows 上で依存インストールが成功し、`npx expo start` が QR コードと接続 URL を表示する
   - _Requirements: 1.1, 1.2, 1.3, 2.2, 9.4_
 
-- [ ] 1.2 TypeScript strict と品質コマンドの入口を用意する
+- [x] 1.2 TypeScript strict と品質コマンドの入口を用意する
   - `tsconfig.json` を strict にし、`@/*` を `src/*` に解決する別名を定義する
   - `eslint-config-expo/flat` を基底にした ESLint 設定と Prettier を導入する
   - npm スクリプトに `start` / `lint` / `typecheck` の 3 つを置く。`test` は vitest を導入する 1.3 が追加する
@@ -19,7 +19,7 @@
   - 観測可能な完了: Windows 上で `npm run lint` と `npm run typecheck` が完走し、違反を混入させると非ゼロ終了コードとファイル名付きの出力が得られる
   - _Requirements: 1.4, 7.1, 7.2, 7.4_
 
-- [ ] 1.3 vitest をセットアップする
+- [x] 1.3 vitest をセットアップする
   - `environment: 'node'`、`include` に `src/**/*.test.ts` と `tests/**/*.test.ts` を指定する
   - `resolve.alias` で `@/` を解決する（vitest は tsconfig の `paths` を読まない）
   - `test` スクリプトを追加し、`start` / `lint` / `typecheck` / `test` の 4 つが揃った状態にする
@@ -27,15 +27,15 @@
   - 観測可能な完了: Windows 上で `npm run test` が実行され、テストが 0 件でないこと、および失敗時に非ゼロ終了コードを返すことを確認できる
   - _Requirements: 6.3, 7.3_
 
-- [ ] 1.4 リポジトリ衛生を設定する
+- [x] 1.4 リポジトリ衛生を設定する
   - `.gitignore` に `node_modules/`、`ios/`、`android/`、`.expo/`、`.env`、証明書、プロビジョニングプロファイル、個人メディアの拡張子を追加する
   - 依存ツリーに対して既知のアナリティクス・クラッシュレポート・テレメトリのパッケージ名を検索し、一致が 0 件であることを確認する
   - **証跡は絞り込み結果に限る。** 依存ツリーの全体出力（`npm ls --all` は 2000 行規模）を報告に転記しない。残すのは、実行したコマンド全文・検索結果・反例（同じ出力に実在するパッケージ名で検索して一致行が出ること）の 3 点
   - 観測可能な完了: `git status` に生成物と秘密情報の候補が現れない。既知名の検索が 0 件で、反例の検索では一致行が得られ、両方の実テキストが報告に残る
   - _Requirements: 9.2, 9.3, 9.4_
 
-- [ ] 2. 層境界の定義と機械的強制
-- [ ] 2.1 三層ディレクトリと ESLint の層境界ルールを定義する
+- [x] 2. 層境界の定義と機械的強制
+- [x] 2.1 三層ディレクトリと ESLint の層境界ルールを定義する
   - `src/core` / `src/ui` / `src/app` を作り、それぞれの役割を設定ファイルのコメントに書く
   - `src/core/**` に `no-restricted-imports` を適用し、`react`、`react-*`、`react-native/*`、`expo`、`expo-*`、`expo/*`、`@expo/*`、`@/ui/*`、`@/app/*` を禁じる
   - `src/ui/**` に `@/app/*` の import を禁じる
@@ -44,7 +44,7 @@
   - 観測可能な完了: `src/core` に `react` を import する行を一時的に置くと `npm run lint` がその行を指してエラー終了する
   - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 2.2 層境界ルールが有効であることを検証するテストを書く
+- [x] 2.2 層境界ルールが有効であることを検証するテストを書く
   - ESLint の Node API に `src/core` 配下のパスを装った文字列を渡し、`react` / `react-native` / `expo-router` / `@/ui/...` の各 import でエラーが報告されることを確認する
   - 対照として、`src/ui` 配下のパスでは同じコードがこのルールに引っかからないことを確認する
   - 違反を含む実ファイルをリポジトリに置かない
@@ -85,7 +85,8 @@
 - [ ] 4.2 (P) アプリ識別情報と表示設定を宣言する
   - 表示名 `FormCatalog`、bundle identifier `com.yutaishikuro.formcatalog`、`orientation` は縦、`userInterfaceStyle` は `automatic` を設定する
   - `expo-router` を plugins に宣言する。この時点では `expo-build-properties` を追加しない
-  - bundle identifier を以後変更しないことを設定ファイルのコメントに残す
+  - **現状の確認から始めること。** `app.json` は `create-expo-app` が生成するファイルであり、タスク1の時点で上記の値がすでに入っている可能性がある。入っていれば差分は不要であり、それを確認した結果を報告する
+  - bundle identifier を変更しない旨は `/AGENTS.md` §8 が正本である。`app.json` は JSON でコメントを書けないため、ここでは重複して書かない
   - 観測可能な完了: 上記 5 つの設定値が `app.json` に入り、`npm run lint` と `npm run typecheck` が通る。表示名とダーク配色の実挙動は、アプリをインストールする 5.4 と実機の 6.4 が確認する
   - _Requirements: 4.2, 4.3, 5.1, 5.2, 5.3, 5.5_
   - _Boundary: AppConfig_
