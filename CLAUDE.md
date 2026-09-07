@@ -42,12 +42,14 @@ Codex と Claude が違うルールで動くことを構造的に防いでいる
     - `/kiro-spec-tasks {feature} [-y]`
   - Multi-spec: `/kiro-spec-batch` — creates all specs from roadmap.md in parallel by dependency wave
 - Phase 2 (Implementation): **`/kiro-impl` は使わない。** 実装は TAKT 経由で Codex が行い、レビューを Claude が担う
-  - 投入の単位は tasks.md の親タスク（サブタスクの束）。`takt add #<Issue番号>` で渡す
+  - 投入の単位は tasks.md の親タスク（サブタスクの束）
   - レビューのステップでは Claude が `kiro-review` スキルを適用する
   - 完了主張の前に `kiro-verify-completion` を通す
-  - 停滞は `loop_monitors`（`cycle` / `threshold` / `judge`）で止める。**threshold 到達時に呼ばれるのは AI の loop judge であって人間ではない**。宣言していない経路は監視対象外。詳細は `.kiro/steering/roadmap.md` の「ループの止め方」
+  - 停滞は `loop_monitors`（`cycle` / `threshold` / `judge`）で止める。**threshold 到達時に呼ばれるのは AI の loop judge であって人間ではない**。宣言していない経路は監視対象外。詳細は `.kiro/steering/takt-workflow.md` の「ループの止め方」
   - 投入は `takt add "タスクの説明文"`（プレーンテキスト）を既定とする。Issue の起票は不要
   - **定型は `.takt/facets/` に置き、タスク文にはそのタスク固有のことだけ書く**（どのスペックのどのタスクか / 固有の指示 / 着手してはいけない範囲）。facet は `AGENTS.md` を再掲せず、参照順序だけを書く
+  - **マージしたら `tasks.md` の該当タスクを `[x]` にする。** TAKT はこれを更新しない
+  - **操作手順の正本は `.kiro/steering/takt-workflow.md`。** 1 サイクルの手順、タスク文の書き方、`ABORT` 時の判断はそちらを見る
   - `/kiro-validate-impl {feature}` (standalone re-validation)
 - Progress check: `/kiro-spec-status {feature}` (use anytime)
 
@@ -73,7 +75,8 @@ Skills are located in `.claude/skills/kiro-*/SKILL.md`
 - **`/AGENTS.md` が制約の正本。** steering ファイルは制約を重複して書かず、`AGENTS.md` を参照する
 - 現在の steering:
   - `roadmap.md` — スペックの分割、依存順序、その理由
+  - `takt-workflow.md` — **TAKT の操作手順の正本**（1 サイクル、タスク文、失敗時の判断、facet、ループの止め方）
   - `exercise-seed.md` — 8 部位 / 54 種目のシードデータと、スキーマ設計への含意
   - `spike-plan.md` — Phase 0 技術スパイクの計画（測る 4 つの数字と打ち切り条件）
-  - `spike-findings.md` — スパイクの測定結果（**未作成。Phase 0 完了時に作る**）
+  - `spike-findings.md` — スパイクの測定結果（**②のみ測定済み。①③④ は未測定**）
 - Custom files are supported (managed via `/kiro-steering-custom`)
