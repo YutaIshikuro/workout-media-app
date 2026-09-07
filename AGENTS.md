@@ -51,6 +51,10 @@ iPhone の写真ライブラリに埋もれた筋トレの参考動画（Instagr
 
 New Architecture は SDK 55 以降で必須化されており無効化できない。すべてのコードが New Architecture 上で動くこと。
 
+**Expo 系パッケージは SDK と同じバージョン系列に揃える。** SDK 57 では `expo-router` も `expo-status-bar` も `57.x` である（`expo-router@6.x` は旧系列であり、混ぜると peer 依存が解決できなくなる）。依存を追加・変更したら **`npx expo install --check` が `Dependencies are up to date` を返すことを確認する**。追加は `npm install` ではなく `npx expo install` を使う。
+
+この確認を怠って `expo-router@6.0.24` が入ったまま 5 人のレビューと 5 回の検証をすり抜けた実例がある。型検査もテストも通るため、機械的に確認する以外に検出手段がない。
+
 ---
 
 ## 3. 禁止 API・使ってはいけないもの

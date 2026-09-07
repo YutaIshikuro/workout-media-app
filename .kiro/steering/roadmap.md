@@ -58,7 +58,7 @@ iPhone の写真ライブラリに溜まった「筋トレの参考動画・画�
 - **手元での動作確認は実機 iPhone のみ。** ただし自動テストは GitHub Actions の macOS ランナー上の iOS Simulator で回せる（§テスト戦略は `/AGENTS.md` §5）
 
 **Apple / EAS**
-- **Apple Developer Program（$99/年）は未契約。承認まで 2〜7 週間かかる報告が多く、これが最大のクリティカルパス。** 自分では短縮できない
+- **Apple Developer Program は 2026-09-07 に承認された。** 申し込みから承認まで 2〜7 週間かかる報告が多く当初は最大のクリティカルパスだったが、この制約は解消済み。次の待ち時間は新規 UDID の登録で、Apple 側の処理に 24〜72 時間かかる
 - **Apple 契約なしでも、App Store 版の Expo Go（57.0.9、2026-09-02 公開）で実機検証ができる。** `expo-video` も `expo-media-library` も Expo Go に同梱されている。CLI と iPhone の Expo Go の両方で同一 Expo アカウントへのログインが必須
 - Expo Go でできないこと: カスタム権限文言（`ios.infoPlist`）、config plugin / prebuild 由来の native 設定、Expo Go 未同梱の native ライブラリ
 - EAS Build 無料枠は iOS 15 ビルド/月、タイムアウト 45 分、同時実行 1、低優先度キュー
@@ -73,13 +73,14 @@ iPhone の写真ライブラリに溜まった「筋トレの参考動画・画�
 **設計上の既知リスク**
 - `localIdentifier` は iCloud 復元・iOS 更新をまたぐと切れる。**恒久キーではなくベストエフォート**として扱う
 - 限定アクセスの再選択ピッカーがライブラリ全体を表示するのは iOS 側の仕様で、JS から制御できない。取り込み済みかどうかがピッカー上で区別できないため、取り込み側で重複排除が必要
-- 限定アクセス許可済みでもアプリ再起動後に再度権限を要求される不具合報告がある。**スパイクで検証する。壊れていれば全件アクセス併用に方針を戻す**
+- ~~限定アクセス許可済みでもアプリ再起動後に再度権限を要求される不具合報告がある~~ — **スパイクで検証済み（3/3 で再要求なし）。方針変更は不要**（`spike-findings.md`）。ただし Expo Go 上の測定であり、development build で再確認する
+- **限定アクセスのピッカーは選択集合の「編集」である。** 追加だけでなく削除もされる。参照切れには「実際に削除された」と「選択から外された」の 2 原因があり、JS から区別できない（`spike-findings.md`）
 - **iOS Simulator は HEVC を再生できない。** iPhone の画面録画は既定で HEVC の `.MOV` であり、動画再生は Simulator E2E では検証できない
 
 ## Boundary Strategy
 
 - **基盤層と機能層を分離**: `app-foundation`（骨格・CI 配管）と `local-data-store`（永続化）は互いに独立で並行着手できる
-- **Apple 承認に依存する部分を隔離**: `eas-delivery` は Apple Developer Program の承認が下りるまで着手できない。ここに閉じ込めることで、他のスペックが承認待ちでブロックされない
+- **Apple 承認に依存する部分を隔離**: `eas-delivery` は Apple Developer Program の承認を前提とする。承認は 2026-09-07 に下りたため、この隔離は結果的にクリティカルパスの遅延を吸収した
 - **データ取得と分類と閲覧を分離**: 写真ライブラリという外部システムとの境界（`media-library-sync`）、種目という業務知識の境界（`tagging-workflow`）、表示の境界（`library-browser`）は変更理由が異なる
 - **プレイヤーを独立させる**: `video-viewer` は本アプリの核心価値であり、閲覧一覧とは独立に検証・改善したい
 - **公開準備を凍結**: `release-readiness` は MVP スコープ外。将来解凍する
@@ -89,9 +90,9 @@ iPhone の写真ライブラリに溜まった「筋トレの参考動画・画�
   - `media-library-sync` ↔ 全体: 参照切れ状態のメディアをどう表示するか。UI 側が「参照切れ」という状態を扱えることを前提に設計する
   - `app-foundation` ↔ `eas-delivery`: eas.json のプロファイル定義。開発ビルド設定は `eas-delivery` が所有し、`app-foundation` は eas.json を作らない
 
-## Phase 0: 技術スパイク（Apple 承認待ちの間に実施）
+## Phase 0: 技術スパイク
 
-Apple Developer Program の承認に 2〜7 週間かかる。その待ち時間で、本プロジェクトの技術的な未知を Expo Go 上で潰す。詳細は `.kiro/steering/spike-plan.md`。
+本プロジェクトの技術的な未知を Expo Go 上で潰す。当初は Apple 承認待ちの時間を充てる計画だったが、**承認が下りた後もこのスパイクの価値は変わらない**。測定③が `local-data-store` のスキーマを、測定④がサムネイルの永続化方針を決めるためである。計画は `.kiro/steering/spike-plan.md`、結果は `.kiro/steering/spike-findings.md`。
 
 - 実施場所: **リポジトリ外の `../formcatalog-spike`**（このリポジトリは `app-foundation` が空の状態で初期化するため、混入させない）
 - 実施者: **人間 + Claude が手書き**。TAKT / Codex には投げない（仕様化のコストがスパイク本体を上回る）
@@ -115,59 +116,4 @@ Apple Developer Program の承認に 2〜7 週間かかる。その待ち時間�
 - **フェーズ 2（実装）は TAKT 経由で Codex が行う。** `/kiro-impl` は使わない
 - **レビューは Claude が `kiro-review` スキルを適用する。** 完了主張の前に `kiro-verify-completion` を通す
 - **投入の単位は tasks.md の親タスク**（サブタスクの束）。1 タスク単位は worktree と context の立ち上げコストが実装量を上回り、1 スペック単位は差分が大きすぎてレビューが形骸化する
-
-### TAKT へのタスクの渡し方
-
-TAKT の用語は **workflow（ステップの列）と step** である。`piece` / `movement` という単位は存在しない。
-
-投入経路は 3 つある。CLI の定義は `takt add [options] [task]` で、`task` は **Task description or issue reference** — **タスクの説明文そのものを渡せる。Issue 番号は選択肢の 1 つにすぎない**:
-
-- **`takt add "タスクの説明文"`** — 本文が `.takt/tasks/<日時>-<スラッグ>/order.md` に書き出され、キューに積まれる。**Issue の起票は不要**
-- `takt add "#<Issue番号>"` — GitHub Issue の内容をタスクにする
-- 会話モードで作業を説明し、「タスクにつむ」を選ぶ
-
-**本プロジェクトはプレーンテキスト投入を既定とする。** 親タスクごとに Issue を立てるのは不要な手間であり、`run-training-app` でも全タスクをプレーンテキストで投入している。
-
-### 定型は facet に置き、タスク文には固有のことだけ書く
-
-**毎回書く必要があるのは、そのタスク固有のことだけでよい。** 定型は `.takt/facets/` に置く。facet は Persona / Policy / Instruction / Knowledge / Output Contract の 5 関心に分けて記述し、**ステップごとに注入・省略・上書きができる**（同じワークフロー定義とファイルからは同じプロンプトが決定的に組み立てられる）。
-
-facet に置くもの:
-
-| 内容 | 置き場所 |
-|---|---|
-| spec / steering / docs の参照順序 | `spec-driven.md` |
-| タスク境界の遵守（先のタスクに手を出さない） | `spec-driven.md` |
-| ファイル配置と命名規約に従う | `spec-driven.md` |
-| 検証できる範囲と実行コマンド（Windows / EAS / Simulator の別） | `knowledge/` 配下 |
-| 「通った」と嘘を書かない、未検証は未検証と書く | `verification-honesty.md` |
-| 日本語で書く | `config.yaml` の `language: ja` |
-
-**重要な区別**: TAKT が `.kiro/steering/` を自動で読むのではない。**facet が読ませている。** `spec-driven.md` の参照順序がそう指示しているから、plan ステップが steering を読んだ記録が残る。この区別を取り違えると、定型を毎回タスク文に手で書く運用に戻る。`run-training-app` では facet 導入後にタスク文が **30 行から 2 行**になった。
-
-**facet は `AGENTS.md` を再掲しない。** 制約の正本は `AGENTS.md` のままである（Codex は `AGENTS.md` を規約として読む）。facet に書くのは「何を、どの順で読むか」という参照順序であって、制約の中身ではない。ここを再掲すると正本が 2 つになり、片方だけ更新されて食い違う。
-
-タスク文に書くのは 3 つだけ:
-
-1. **どのスペックのどのタスクか** — `.kiro/specs/<spec>/tasks.md` の親タスク番号と名前
-2. **そのタスク固有の指示**（あれば）
-3. **着手してはいけない範囲** — 隣接タスクの担当ファイル
-
-### ループの止め方
-
-**TAKT に「N 往復したら人間にエスカレーションする」機能はない。** 実際の機構は `loop_monitors` で、設定は次の 3 つのサブキーからなる:
-
-- `cycle` — 監視対象とするステップ名の配列（例: `['implement', 'review']`）
-- `threshold` — 介入までにその列が反復してよい回数
-- `judge` — 裁定ステップの `instruction` と `rules`
-
-`threshold` に達すると **loop judge（AI の裁定役）** が呼ばれ、タスクの進捗から収束見込みを評価して、**ループ継続 / 別ステップへの迂回（`final-gate` など）/ `ABORT`** のいずれかに振り分ける。**人間には上がらない。** 人間が介入するのは、`ABORT` した結果や `final-gate` の出力を見たときである。
-
-**`cycle` は明示的に宣言したステップ列だけを監視する。** 宣言していない経路（別のステップ間の往復、ステップ内部での試行錯誤）は監視対象外であり、そこでの停滞は `loop_monitors` では止まらない。ワークフローの全経路が守られていると仮定しないこと。
-
-実装 → レビューの往復には `threshold: 3` を設定する。これは「3 往復で裁定が入る」という意味であって、「3 往復で人間に上がる」ではない。
-
-ワークフロー全体の暴走は `max_steps` で止める（`steps` / `initial_step` と並ぶワークフローの設定キー）。
-
-**参考値**: `run-training-app` での実測では、policy の導入により **448 分 → 151 分**に短縮された。`max_steps` は **75** が推奨。
-出典は開発者の実測であり、TAKT の公開ドキュメント（README / `docs/configuration.md` / DeepWiki）には記載がない。この値を引用するときは出典を併記すること。
+- **TAKT の操作手順は `.kiro/steering/takt-workflow.md` が正本。** 1 サイクルの手順、タスク文の書き方、失敗時の判断、facet、ループの止め方はそちらにある。ここには重複して書かない

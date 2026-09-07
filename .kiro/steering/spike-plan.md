@@ -4,11 +4,14 @@
 
 **動くものを作ることではない。4 つの数字を取ることである。**
 
-本プロジェクトの技術的な未知は `expo-video` と `expo-media-library` の 2 つに集中している。これらを推測で要件に書くと、`video-viewer` と `media-library-sync` の要件が実装不能または過剰になる。Apple Developer Program の承認待ち（2〜7 週間）は、この不確実性を潰すのに使う。
+本プロジェクトの技術的な未知は `expo-video` と `expo-media-library` の 2 つに集中している。これらを推測で要件に書くと、`video-viewer` と `media-library-sync` の要件が実装不能または過剰になる。
+
+**当初は Apple 承認待ちの時間を充てる計画だったが、2026-09-07 に承認が下りた後もこのスパイクは必要である。** 測定③が `local-data-store` のスキーマに保持するフィールドを決め、測定④がサムネイルをファイル永続化しない方針（`/AGENTS.md` §6）の可否を決めるためであり、待ち時間の有無とは無関係に前提となる。
 
 ## 前提
 
 - **Apple Developer Program は不要。** App Store 版の Expo Go（57.0.9、2026-09-02 公開）に `expo-video` と `expo-media-library` が同梱されている
+- ただし**測定②だけは development build で測り直す必要がある**。写真ライブラリの権限は Expo Go のコンテナに紐づくため、Expo Go 上で測れるのは Expo Go の挙動である（`spike-findings.md` 参照）
 - CLI（`npx expo login`）と iPhone の Expo Go アプリの**両方で同一の Expo アカウントにログインすること**。iOS の Expo Go 57 はこれを必須にしている
 - Metro は同一 LAN で繋がる。繋がらなければ `npx expo start --tunnel`
 - Expo 公式ドキュメントの「Set up your environment > iOS device with Expo Go」は**古い手順（Apple Developer Program が必要）のまま**なので参照しない
@@ -108,6 +111,6 @@ npx create-expo-app@latest ../formcatalog-spike --template blank-typescript
 
 ## この期間の人間の手作業
 
-1. **Apple Developer Program に申し込む**（最優先。2〜7 週間かかり短縮不能）
+1. ~~**Apple Developer Program に申し込む**~~ — 2026-09-07 に承認済み。次は実機 UDID の EAS 登録（Apple 側の処理に 24〜72 時間）
 2. Expo アカウントを作り、CLI と iPhone の Expo Go の両方でログイン
 3. GitHub リポジトリを public にする
