@@ -1,0 +1,28 @@
+# ローカルのWindows / WSL2環境では実行せず、CI のmacOSランナーで実行する。
+appId: com.yutaishikuro.formcatalog
+---
+# 1.
+- launchApp
+# 2.
+- assertVisible:
+    id: tab-library
+- assertVisible:
+    id: tab-inbox
+- assertVisible:
+    id: tab-settings
+# 3.
+- assertVisible:
+    id: screen-library
+# 4.
+- assertVisible:
+    id: placeholder-body
+# 5.
+- tapOn:
+    id: tab-inbox
+- assertVisible:
+    id: screen-inbox
+# 6.
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: screen-settings
